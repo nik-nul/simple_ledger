@@ -1,0 +1,332 @@
+{% extends "_base.html" %}
+
+{% macro render_field(field) %}
+<div class="mb-3">
+    {{ field.label(class="form-label") }}
+    {{ field(class="form-control" + (" is-invalid" if field.errors else "")) }}
+    {% for error in field.errors %}
+    <div class="invalid-feedback">{{ error }}</div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">仪表盘</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <form method="GET" action="{{ url_for('main.index') }}" class="d-flex">
+            {{ date_form.hidden_tag() }}
+            <div class="input-group input-group-sm">
+                {{ date_form.month(class="form-select") }}
+                {{ date_form.year(class="form-select") }}
+                {{ date_form.submit(class="btn btn-outline-secondary") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<h4 class="text-muted">{{ current_year }}年 {{ current_month }}月 概览</h4>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title text-success">总收入</h5>
+                        <h2 class="display-6 fw-bold">+ {{ "%.2f"|format(stats.income) }}</h2>
+                    </div>
+                    <i class="bi bi-graph-up-arrow card-icon text-success"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title text-danger">总支出</h5>
+                        <h2 class="display-6 fw-bold">- {{ "%.2f"|format(stats.expense) }}</h2>
+                    </div>
+                    <i class="bi bi-graph-down-arrow card-icon text-danger"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title text-primary">月结余</h5>
+                        <h2 class="display-6 fw-bold {% if stats.balance >= 0 %}text-success{% else %}text-danger{% endif %}">{{ "%.2f"|format(stats.balance) }}</h2>
+                    </div>
+                    <i class="bi bi-wallet2 card-icon text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12 d-grid gap-2 d-md-flex justify-content-md-start">
+        <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#expenseModal">
+            <i class="bi bi-dash-circle"></i> 记一笔支出
+        </button>
+        <button type="button" class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#incomeModal">
+            <i class="bi bi-plus-circle"></i> 记一笔收入
+        </button>
+    </div>
+</div>
+
+<div class="row g-4 mt-3">
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">支出分类</h5>
+            </div>
+            <div class="card-body" style="min-height: 350px;">
+                <canvas id="expensePieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">预算概览</h5>
+            </div>
+            <div class="card-body">
+                {% if budget_warnings %}
+                    {% for budget in budget_warnings %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ budget.name }}</strong>
+                            <span class="text-muted">
+                                {{ "%.2f"|format(budget.spent) }} / {{ "%.2f"|format(budget.amount) }}
+                            </span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            {% set bar_class = 'bg-success' %}
+                            {% if budget.percent > 75 %}{% set bar_class = 'bg-warning text-dark' %}{% endif %}
+                            {% if budget.percent > 90 %}{% set bar_class = 'bg-danger' %}{% endif %}
+                            
+                            <div class="progress-bar {{ bar_class }}" role="progressbar" 
+                                 style="width: {{ budget.percent }}%;" 
+                                 aria-valuenow="{{ budget.percent }}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ "%.0f"|format(budget.percent) }}%
+                            </div>
+                        </div>
+                        {% if budget.percent > 100 %}
+                        <small class="text-danger d-block mt-1">
+                            <i class="bi bi-exclamation-triangle-fill"></i> 已超支 {{ "%.2f"|format(budget.spent - budget.amount) }} 元！
+                        </small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="alert alert-info">
+                    您本月还没有设置任何预算。
+                    <a href="{{ url_for('main.budget', year=current_year, month=current_month) }}" class="alert-link">前往设置</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0">本月收支趋势</h5>
+            </div>
+            <div class="card-body" style="min-height: 300px;">
+                <canvas id="lineChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h4 class="mb-3">最近添加的交易记录</h4>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle bg-white shadow-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">日期</th>
+                        <th scope="col">类型</th>
+                        <th scope="col">分类</th>
+                        <th scope="col">金额</th>
+                                <th scope="col">备注</th>
+                                <th scope="col">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in recent_transactions %}
+                    <tr>
+                        <td>{{ t.date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            {% if t.type == 'expense' %}
+                            <span class="badge bg-danger-subtle text-danger-emphasis">支出</span>
+                            {% else %}
+                            <span class="badge bg-success-subtle text-success-emphasis">收入</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ t.category.name }}</td>
+                        <td class="fw-bold {% if t.type == 'expense' %}text-danger{% else %}text-success{% endif %}">
+                            {{ "%.2f"|format(t.amount) }}
+                        </td>
+                        <td class="text-muted">{{ t.memo or '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('main.edit_transaction', id=t.id) }}" class="btn btn-sm btn-outline-primary me-1">编辑</a>
+
+                            <form method="POST" action="{{ url_for('main.delete_transaction', id=t.id) }}" class="d-inline" onsubmit="return confirm('确认要删除这笔交易吗？此操作不可撤销。');">
+                                {{ delete_form.hidden_tag() }}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">删除</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted p-4">暂无交易记录。</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('main.index', year=current_year, month=current_month) }}" novalidate>
+                {{ expense_form.hidden_tag() }}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="expenseModalLabel">记一笔支出</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{ expense_form.type(class="d-none") }} {{ render_field(expense_form.amount) }}
+                    {{ render_field(expense_form.category) }}
+                    {{ render_field(expense_form.date) }}
+                    {{ render_field(expense_form.memo) }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    {{ expense_form.submit(class="btn btn-danger") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="incomeModal" tabindex="-1" aria-labelledby="incomeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('main.index', year=current_year, month=current_month) }}" novalidate>
+                {{ income_form.hidden_tag() }}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="incomeModalLabel">记一笔收入</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{ income_form.type(class="d-none") }} {{ render_field(income_form.amount) }}
+                    {{ render_field(income_form.category) }}
+                    {{ render_field(income_form.date) }}
+                    {{ render_field(income_form.memo) }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    {{ income_form.submit(class="btn btn-success") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// --- Chart.js 逻辑 ---
+(async function() {
+    // 从 API 获取数据
+    const response = await fetch("{{ url_for('main.chart_data', year=current_year, month=current_month) }}");
+    const chartData = await response.json();
+
+    // 1. 支出饼图
+    const pieCtx = document.getElementById('expensePieChart');
+    if (pieCtx && chartData.pie_data.data.length > 0) {
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: chartData.pie_data.labels,
+                datasets: [{
+                    label: '支出',
+                    data: chartData.pie_data.data,
+                    backgroundColor: [
+                        '#dc3545', '#fd7e14', '#ffc107', '#20c997', '#0d6efd',
+                        '#6f42c1', '#d63384', '#6c757d', '#198754', '#0dcaf0'
+                    ],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    } else if (pieCtx) {
+        pieCtx.getContext('2d').fillText("本月暂无支出数据", pieCtx.width / 2 - 50, pieCtx.height / 2);
+    }
+
+    // 2. 收支折线图
+    const lineCtx = document.getElementById('lineChart');
+    if (lineCtx) {
+        new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: chartData.line_data.labels,
+                datasets: [
+                    {
+                        label: '支出',
+                        data: chartData.line_data.expense,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        fill: true,
+                        tension: 0.1
+                    },
+                    {
+                        label: '收入',
+                        data: chartData.line_data.income,
+                        borderColor: '#198754',
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        fill: true,
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

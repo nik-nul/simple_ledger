@@ -1,0 +1,76 @@
+{% extends "_base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">预算管理</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <form method="GET" action="{{ url_for('main.budget') }}" class="d-flex">
+            {{ date_form.hidden_tag() }}
+            <div class="input-group input-group-sm">
+                {{ date_form.month(class="form-select") }}
+                {{ date_form.year(class="form-select") }}
+                {{ date_form.submit(class="btn btn-outline-secondary") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<h4 class="text-muted mb-4">{{ current_year }}年 {{ current_month }}月 预算设置</h4>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                
+                <form method="POST" action="{{ url_for('main.budget', year=current_year, month=current_month) }}" class="mb-4 pb-4 border-bottom" novalidate>
+                    {{ form.hidden_tag() }}
+                    {{ form.category(class="d-none") }} <div class="row g-2 align-items-center">
+                        <div class="col-md-5">
+                            <h5 class="mb-0">月度总预算</h5>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <span class="input-group-text">￥</span>
+                                {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else ""), placeholder="0.00", value=(budgets.get(None).amount if budgets.get(None) else '')) }}
+                                {% for error in form.amount.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-grid">
+                            {{ form.submit(class="btn btn-primary", value="设置") }}
+                        </div>
+                    </div>
+                </form>
+
+                <h5 class="mb-3">按分类设置预算</h5>
+                
+                {% for category in expense_categories %}
+                <form method="POST" action="{{ url_for('main.budget', year=current_year, month=current_month) }}" class="mb-3" novalidate>
+                    {{ form.hidden_tag() }}
+                    <input type="hidden" name="category" value="{{ category.id }}">
+                    
+                    <div class="row g-2 align-items-center">
+                        <label for="budget-{{ category.id }}" class="col-md-5 col-form-label">{{ category.name }}</label>
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <span class="input-group-text">￥</span>
+                                <input type="number" step="0.01" name="amount" class="form-control" 
+                                       id="budget-{{ category.id }}" 
+                                       value="{{ (budgets.get(category.id).amount if budgets.get(category.id) else '') }}" 
+                                       placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-grid">
+                            <button type="submit" class="btn btn-outline-primary">设置</button>
+                        </div>
+                    </div>
+                </form>
+                {% else %}
+                <p class="text-muted">您还没有添加任何支出分类。</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

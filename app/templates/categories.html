@@ -1,0 +1,79 @@
+{% extends "_base.html" %}
+
+{% macro render_field(field) %}
+<div class="mb-3">
+    {{ field.label(class="form-label") }}
+    {{ field(class="form-control" + (" is-invalid" if field.errors else "")) }}
+    {% for error in field.errors %}
+    <div class="invalid-feedback">{{ error }}</div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">分类管理</h1>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm sticky-top" style="top: 80px;">
+            <div class="card-header">
+                <h5 class="mb-0">添加新分类</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('main.categories') }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    {{ render_field(form.name) }}
+                    {{ render_field(form.type) }}
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <h4>支出分类</h4>
+                <ul class="list-group shadow-sm">
+                    {% for cat in expense_categories %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <form method="POST" action="{{ url_for('main.edit_category', id=cat.id) }}" class="d-inline-flex align-items-center flex-grow-1">
+                            <input type="text" name="name" class="form-control form-control-sm me-2" value="{{ cat.name }}">
+                            <button type="submit" class="btn btn-outline-primary btn-sm me-2" title="保存"><i class="bi bi-check-lg"></i></button>
+                        </form>
+                        <form method="POST" action="{{ url_for('main.delete_category', id=cat.id) }}" onsubmit="return confirm('确定要删除“{{ cat.name }}”吗？此操作不可撤销。');" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="删除"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted">暂无支出分类</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <div class="col-lg-6">
+                <h4>收入分类</h4>
+                <ul class="list-group shadow-sm">
+                    {% for cat in income_categories %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <form method="POST" action="{{ url_for('main.edit_category', id=cat.id) }}" class="d-inline-flex align-items-center flex-grow-1">
+                            <input type="text" name="name" class="form-control form-control-sm me-2" value="{{ cat.name }}">
+                            <button type="submit" class="btn btn-outline-primary btn-sm me-2" title="保存"><i class="bi bi-check-lg"></i></button>
+                        </form>
+                        <form method="POST" action="{{ url_for('main.delete_category', id=cat.id) }}" onsubmit="return confirm('确定要删除“{{ cat.name }}”吗？');" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="删除"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted">暂无收入分类</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
