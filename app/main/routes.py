@@ -173,7 +173,7 @@ def chart_data():
     year_str = request.args.get('year', str(date.today().year))
     month_str = request.args.get('month', str(date.today().month))
    
-    start_date, end_date, year, month = get_date_range(year_str, month_str)
+    start_date, end_date, _, _ = get_date_range(year_str, month_str)
 
     # 1. 支出分类饼图 (当月)
     pie_data_q = db.session.query(
