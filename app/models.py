@@ -14,7 +14,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(64), index=True, unique=True, nullable=False)
     email = db.Column(db.String(120), index=True, unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
-    
+   
     transactions = db.relationship('Transaction', backref='author', lazy='dynamic', cascade="all, delete-orphan")
     categories = db.relationship('Category', backref='owner', lazy='dynamic', cascade="all, delete-orphan")
     budgets = db.relationship('Budget', backref='owner', lazy='dynamic', cascade="all, delete-orphan")
@@ -56,7 +56,7 @@ class Transaction(db.Model):
     type = db.Column(db.String(10), nullable=False, default='expense')
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     memo = db.Column(db.String(200))
-    
+   
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
 
@@ -68,9 +68,9 @@ class Budget(db.Model):
     amount = db.Column(db.Float, nullable=False)
     year = db.Column(db.Integer, nullable=False, index=True)
     month = db.Column(db.Integer, nullable=False, index=True)
-    
+   
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
+   
     # 如果 category_id 为空, 表示这是月度总预算
     # 如果有值, 表示是特定分类的预算
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)

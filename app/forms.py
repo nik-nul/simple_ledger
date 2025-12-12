@@ -71,10 +71,10 @@ class BudgetForm(FlaskForm):
     amount = DecimalField('预算金额', validators=[DataRequired(), NumberRange(min=0)], places=2)
     # 动态查询所有“支出”分类，并允许“总预算”选项
     category = QuerySelectField(
-        '预算分类', 
-        query_factory=get_user_expense_categories, 
-        get_label='name', 
-        allow_blank=True, 
+        '预算分类',
+        query_factory=get_user_expense_categories,
+        get_label='name',
+        allow_blank=True,
         blank_text='--- (月度总预算) ---'
     )
     submit = SubmitField('设置预算')

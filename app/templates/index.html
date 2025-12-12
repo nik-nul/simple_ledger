@@ -111,10 +111,10 @@
                             {% set bar_class = 'bg-success' %}
                             {% if budget.percent > 75 %}{% set bar_class = 'bg-warning text-dark' %}{% endif %}
                             {% if budget.percent > 90 %}{% set bar_class = 'bg-danger' %}{% endif %}
-                            
-                            <div class="progress-bar {{ bar_class }}" role="progressbar" 
-                                 style="width: {{ budget.percent }}%;" 
-                                 aria-valuenow="{{ budget.percent }}" 
+                           
+                            <div class="progress-bar {{ bar_class }}" role="progressbar"
+                                 style="width: {{ budget.percent }}%;"
+                                 aria-valuenow="{{ budget.percent }}"
                                  aria-valuemin="0" aria-valuemax="100">
                                 {{ "%.0f"|format(budget.percent) }}%
                             </div>

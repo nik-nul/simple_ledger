@@ -8,7 +8,7 @@
                 <h2 class="card-title text-center mb-4">创建账户</h2>
                 <form method="POST" action="" novalidate>
                     {{ form.hidden_tag() }}
-                    
+                   
                     <div class="mb-3">
                         {{ form.username.label(class="form-label") }}
                         {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
@@ -16,7 +16,7 @@
                         <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
                     </div>
-                    
+                   
                     <div class="mb-3">
                         {{ form.email.label(class="form-label") }}
                         {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
@@ -24,7 +24,7 @@
                         <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
                     </div>
-                    
+                   
                     <div class="mb-3">
                         {{ form.password.label(class="form-label") }}
                         {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
@@ -40,12 +40,12 @@
                         <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
                     </div>
-                    
+                   
                     <div class="d-grid">
                         {{ form.submit(class="btn btn-primary btn-lg") }}
                     </div>
                 </form>
-                
+               
                 <p class="text-center mt-4">
                     已有账户？ <a href="{{ url_for('auth.login') }}">登录</a>
                 </p>
