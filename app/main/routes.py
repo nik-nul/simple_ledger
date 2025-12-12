@@ -284,11 +284,11 @@ def transactions():
 
 
 # --- 6. 交易编辑与删除 ---
-@bp.route('/transaction/edit/<int:tid>', methods=['GET', 'POST'])
+@bp.route('/transaction/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
-def edit_transaction(tid):
+def edit_transaction(id):
     """可以编辑交易所有的信息，包括金额、类型、分类、日期和备注。"""
-    t = Transaction.query.get_or_404(tid)
+    t = Transaction.query.get_or_404(id)
     if t.author != current_user:
         flash('没有权限编辑此交易。', 'danger')
         return redirect(url_for('main.transactions'))
@@ -326,13 +326,13 @@ def edit_transaction(tid):
     return render_template('transaction_edit.html', title='编辑交易', form=form, transaction=t)
 
 
-@bp.route('/transaction/delete/<int:tid>', methods=['POST'])
+@bp.route('/transaction/delete/<int:id>', methods=['POST'])
 @login_required
-def delete_transaction(tid):
+def delete_transaction(id):
     form = ConfirmDeleteForm()
     # 需要表单验证以包含 CSRF token
     if form.validate_on_submit():
-        t = Transaction.query.get_or_404(tid)
+        t = Transaction.query.get_or_404(id)
         if t.author != current_user:
             flash('没有权限删除此交易。', 'danger')
             return redirect(request.referrer or url_for('main.index'))
@@ -383,10 +383,10 @@ def categories():
                            expense_categories=expense_categories,
                            income_categories=income_categories)
 
-@bp.route('/categories/edit/<int:cid>', methods=['POST'])
+@bp.route('/categories/edit/<int:id>', methods=['POST'])
 @login_required
-def edit_category(cid):
-    category = Category.query.get_or_404(cid)
+def edit_category(id):
+    category = Category.query.get_or_404(id)
     if category.owner != current_user:
         return redirect(url_for('main.categories')) # 或者 403 Forbidden
    
@@ -394,7 +394,7 @@ def edit_category(cid):
     if new_name and len(new_name) > 0:
         # 检查重名
         exists = Category.query.filter(
-            Category.id != cid,
+            Category.id != id,
             Category.owner == current_user,
             Category.name == new_name,
             Category.type == category.type
@@ -409,10 +409,10 @@ def edit_category(cid):
            
     return redirect(url_for('main.categories'))
 
-@bp.route('/categories/delete/<int:cid>', methods=['POST'])
+@bp.route('/categories/delete/<int:id>', methods=['POST'])
 @login_required
-def delete_category(cid):
-    category = Category.query.get_or_404(cid)
+def delete_category(id):
+    category = Category.query.get_or_404(id)
     if category.owner != current_user:
         return redirect(url_for('main.categories'))
    

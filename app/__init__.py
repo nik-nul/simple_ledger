@@ -40,6 +40,3 @@ def create_app(config_class=Config):
         db.create_all()
 
     return app
-
-# 导入模型，以避免循环导入
-from app import models
