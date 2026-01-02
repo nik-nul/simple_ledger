@@ -1,0 +1,32 @@
+name: Python Project CI
+# 触发工作流的事件：当有代码推送到 main 分支或有人向 main 分支发起 Pull Request 时触发
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+# 工作流包含的任务 (jobs)
+jobs:
+  build-and-test:
+    # 运行此任务的操作系统环境
+    runs-on: ubuntu-latest
+    # 任务包含的步骤 (steps)
+    steps:
+    # 第一步：检出你的代码库
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    # 第二步：设置Python环境
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10' # 根据你的项目指定Python版本
+    # 第三步：安装项目依赖
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt  # 假设你的依赖项在 requirements.txt 中
+        pip install pytest # 安装测试框架
+    # 第四步：运行单元测试
+    - name: Run tests with pytest
+      run: |
+        pytest

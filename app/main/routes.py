@@ -21,10 +21,10 @@ def get_date_range(year_str, month_str):
 
     # 获取月份的最后一天
     _, last_day = calendar.monthrange(year, month)
-   
+
     start_date = datetime(year, month, 1)
     end_date = datetime(year, month, last_day, 23, 59, 59)
-   
+
     return start_date, end_date, year, month
 
 # --- 1. 仪表盘 (首页) & 记账 ---
@@ -36,7 +36,7 @@ def index():
     date_form = DateRangeForm(request.args)
     year_str = request.args.get('year', str(date.today().year))
     month_str = request.args.get('month', str(date.today().month))
-   
+
     # 设置表单默认值
     if request.method == 'GET':
         date_form.year.data = year_str
@@ -48,7 +48,7 @@ def index():
     # 我们使用两个表单实例，并用 prefix 区分
     expense_form = TransactionForm(prefix='exp')
     income_form = TransactionForm(prefix='inc')
-   
+
     # 动态设置表单的分类
     expense_form.category.query_factory = get_user_expense_categories
     income_form.category.query_factory = get_user_income_categories
@@ -85,7 +85,7 @@ def index():
         return redirect(url_for('main.index', year=year, month=month))
 
     # --- 仪表盘统计数据查询 (GET) ---
-   
+
     # 1. 总收支与结余
     total_income_q = db.session.query(func.sum(Transaction.amount)).filter(
         Transaction.user_id == current_user.id,
@@ -100,7 +100,7 @@ def index():
     ).scalar() or 0.0
 
     balance = total_income_q - total_expense_q
-   
+
     stats = {
         'income': total_income_q,
         'expense': total_expense_q,
@@ -109,7 +109,7 @@ def index():
 
     # 2. 预算提醒
     budget_warnings = []
-   
+
     # 查询总预算
     total_budget_q = Budget.query.filter(
         Budget.user_id == current_user.id,
@@ -172,7 +172,7 @@ def index():
 def chart_data():
     year_str = request.args.get('year', str(date.today().year))
     month_str = request.args.get('month', str(date.today().month))
-   
+
     start_date, end_date, _, _ = get_date_range(year_str, month_str)
 
     # 1. 支出分类饼图 (当月)
@@ -184,7 +184,7 @@ def chart_data():
         Transaction.type == 'expense',
         Transaction.date.between(start_date, end_date)
     ).group_by(Category.name).order_by(func.sum(Transaction.amount).desc()).all()
-   
+
     pie_data = {
         'labels': [row.name for row in pie_data_q],
         'data': [float(row.total) for row in pie_data_q]
@@ -193,7 +193,7 @@ def chart_data():
     # 2. 收支趋势折线图 (最近6个月)
     # (为了简化，我们暂时也只显示当月的每日趋势)
     # 一个更复杂的查询会 group by (最近6个的) 'year-month'
-   
+
     # 我们改为查询 "当月每日收支"
     line_data_expense = db.session.query(
         extract('day', Transaction.date).label('day'),
@@ -203,7 +203,7 @@ def chart_data():
         Transaction.type == 'expense',
         Transaction.date.between(start_date, end_date)
     ).group_by('day').all()
-   
+
     line_data_income = db.session.query(
         extract('day', Transaction.date).label('day'),
         func.sum(Transaction.amount).label('total')
@@ -242,19 +242,19 @@ def transactions():
     page = request.args.get('page', 1, type=int)
     # 使用 request.args 填充表单，使其在 GET 请求后保持状态
     form = SearchForm(request.args)
-   
+
     query = Transaction.query.filter_by(author=current_user)
-   
+
     # 动态构建查询
     if form.keyword.data:
         query = query.filter(Transaction.memo.ilike(f"%{form.keyword.data}%"))
        
     if form.category.data:
         query = query.filter(Transaction.category_id == form.category.data.id)
-   
+
     if form.start_date.data:
         query = query.filter(Transaction.date >= form.start_date.data)
-   
+
     if form.end_date.data:
         # 包含当天
         query = query.filter(Transaction.date <= datetime.combine(form.end_date.data, datetime.max.time()))
@@ -351,7 +351,7 @@ def delete_transaction(id):
 def categories():
     """分类管理页面，支持添加新分类，显示已有分类，编辑和删除分类。"""
     form = CategoryForm()
-   
+
     if form.validate_on_submit():
         # 检查分类是否已存在 (同名同类型)
         exists = Category.query.filter_by(
@@ -372,11 +372,11 @@ def categories():
         else:
             flash('同名同类型的分类已存在。', 'warning')
         return redirect(url_for('main.categories'))
-   
+
     # GET: 显示所有分类
     expense_categories = Category.query.filter_by(owner=current_user, type='expense').order_by(Category.name).all()
     income_categories = Category.query.filter_by(owner=current_user, type='income').order_by(Category.name).all()
-   
+
     return render_template('categories.html',
                            title='分类管理',
                            form=form,
@@ -389,7 +389,7 @@ def edit_category(id):
     category = Category.query.get_or_404(id)
     if category.owner != current_user:
         return redirect(url_for('main.categories')) # 或者 403 Forbidden
-   
+
     new_name = request.form.get('name')
     if new_name and len(new_name) > 0:
         # 检查重名
@@ -415,12 +415,12 @@ def delete_category(id):
     category = Category.query.get_or_404(id)
     if category.owner != current_user:
         return redirect(url_for('main.categories'))
-   
+
     # 检查是否有交易关联
     if category.transactions.count() > 0:
         flash('无法删除：该分类下已有交易记录。', 'danger')
         return redirect(url_for('main.categories'))
-   
+
     # 检查是否有预算关联
     if category.budgets.count() > 0:
         flash('无法删除：该分类已设置预算。', 'danger')
@@ -441,15 +441,15 @@ def budget():
     date_form = DateRangeForm(request.args)
     year_str = request.args.get('year', str(date.today().year))
     month_str = request.args.get('month', str(date.today().month))
-   
+
     if request.method == 'GET':
         date_form.year.data = year_str
         date_form.month.data = month_str
        
     year, month = int(year_str), int(month_str)
-   
+
     form = BudgetForm()
-   
+
     if form.validate_on_submit():
         category_id = form.category.data.id if form.category.data else None
        
@@ -486,13 +486,13 @@ def budget():
         year=year,
         month=month
     ).all()
-   
+
     # 为了方便显示，将其处理成字典
     budget_map = {b.category_id: b for b in budgets}
-   
+
     # 获取所有支出分类，用于显示
     expense_categories = Category.query.filter_by(owner=current_user, type='expense').all()
-   
+
     return render_template('budget.html',
                            title='预算管理',
                            form=form,

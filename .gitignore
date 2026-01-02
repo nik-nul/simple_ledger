@@ -2,3 +2,7 @@
 .env
 .vscode/
 app/instance/
+.coverage
+htmlcov/
+.pytest_cache/
+.hypothesis/
