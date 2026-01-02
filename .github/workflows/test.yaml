@@ -29,4 +29,4 @@ jobs:
     # 第四步：运行单元测试
     - name: Run tests with pytest
       run: |
-        pytest
+        pytest --cov=app tests/

@@ -8,5 +8,6 @@ wtforms-sqlalchemy
 python-dotenv
 email_validator
 pytest
+pytest-cov
 hypothesis
 faker
